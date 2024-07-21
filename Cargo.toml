@@ -1,6 +1,8 @@
 [package]
 name = "rusty-notes"
 description = "A markdown web-interface reader."
+repository = "https://github.com/mitnk/rusty-notes"
+keywords = ["markdown", "notebook"]
 version = "1.1.0"
 authors = ["Hugo Wang <w@mitnk.com>"]
 categories = ["command-line-utilities"]
