@@ -1,0 +1,23 @@
+{% extends "notes/base.html" %}
+
+{% block title %}Edit {{ note_path }}{% endblock %}
+
+{% block wrapper %}
+<div>
+    <a href="javascript:history.go(-1)">Go Back</a> // <a href="/notes/">Go Home</a>
+    <br>
+    <hr>
+
+    <span><strong>Editing:</strong> <a href="/notes/{{ note_path }}">{{ note_path }}</a></span>
+<form class="pure-form" method="post" action="">
+<fieldset>
+<textarea id="note" name="note" rows="26" cols="112">
+{{ content }}</textarea>
+
+    <br><br>
+    <button type="submit" class="pure-button pure-button-primary">保存</button>
+</fieldset>
+</form>
+
+</div>
+{% endblock %}

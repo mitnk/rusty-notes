@@ -1,0 +1,43 @@
+[package]
+name = "rusty-notes"
+version = "1.0.0"
+authors = ["Hugo Wang <w@mitnk.com>"]
+edition = "2021"
+
+[profile.release]
+strip = true
+
+[dependencies]
+actix-web = "4"
+actix-files = "0.6"
+comrak = "0.21"
+lazy_static = "1.4"
+regex = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ttl_cache = "0.5"
+futures = "0.3"
+base64 = "0.21"
+bytes = "1.5"
+log = "0.4"
+env_logger = "0.11"
+dotenv = "0.15"
+figment = { version = "0.10", features = ["env"] }
+derive_more = "0.99"
+walkdir = "2"
+rand = "0.8"
+syntect = "5.2"
+scraper = "0.18"
+htmlescape = "0.3"
+mime = "0.3"
+time = "0.3"
+cicada = "0.9"
+
+[dependencies.tera]
+version = "1"
+default-features = false
+
+[dependencies.actix-session]
+version = "0.9"
+features = ["cookie-session"]
+default-features = false

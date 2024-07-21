@@ -1,0 +1,61 @@
+{% extends "notes/base.html" %}
+
+{% block title %}Rusty Notes{% endblock %}
+
+{% block wrapper %}
+<div>
+    <form class="pure-form">
+    <fieldset>
+        <input name="q" value="{{ q|default(value="") }}" placeholder="keywords">
+        <button type="submit" class="pure-button pure-button-primary">Search</button>
+    </fieldset>
+    </form>
+
+    <table class="pure-table pure-table-bordered" width="100%">
+        <tr>
+            <td></td>
+            <td>
+                <a href="/notes/">Home</a>
+            </td>
+            <td style="width: 40%; font-weight: bold;">File Name</td>
+            <td>
+                <strong>Notes Count:</strong>
+            </td>
+            <td width="130"> <strong>{{ records|length }}</strong> </td>
+        </tr>
+    {% for item in records %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+                {{ item.title }}
+            </td>
+            <td>
+                {% if item.root_dir %}
+                    <a href="/notes/{{ item.root_dir }}/{{ item.file_name }}">{{ item.file_name }}</a>
+                {% else %}
+                    <a href="/notes/{{ item.file_name }}">{{ item.file_name }}</a>
+                {% endif %}
+            </td>
+            <td>
+                <a href="/notes/?category={{ item.root_dir }}">{{ item.root_dir }}</a>
+            </td>
+            <td>
+                {{ item.modified_str }}
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+
+    <div>
+        {{ output_p|default(value="") }}
+    </div>
+
+    <div>
+        {{ output|default(value="") }}
+    </div>
+
+    <br>
+    <span style="font-size: 14px;">To create new note, use "<strong>touch::new-dir/new-name.md</strong>" in Search Box and hit Search.</span>
+    <br>
+</div>
+{% endblock %}

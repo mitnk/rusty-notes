@@ -1,0 +1,73 @@
+{% extends "notes/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block wrapper %}
+  <div id="header">
+      <table class="navi" width="100%" border="0" cellpadding="0" cellspacing="0">
+          <tbody>
+              <tr>
+                  <td width="20%" align="left" valign="top">
+                      &nbsp;
+                      <br>
+                      <a href="javascript:history.go(-1)">Go Back</a> // <a href="/notes/">Go Home</a>
+                  </td>
+
+                  <td width="60%" align="center" valign="top">
+                      <a href="/notes/">
+                          <img style="vertical-align:middle" src="/stc/img/rusty-notes.png" alt="" height="26">
+                      </a>
+                      <strong style="font-size: 18px;">Rusty Notes</strong>
+                  </td>
+
+                  <td width="20%" align="right" valign="top">
+                      &nbsp;
+                      <br>
+                      <a href="{{ edit_url }}">Edit</a>
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+
+      <hr>
+  </div>
+
+  <div id="content">
+      {{ content|safe }}
+  </div>
+
+  <div id="footer">
+      <hr>
+      <table class="navi" width="100%" border="0" cellpadding="0" cellspacing="0">
+          <tbody>
+              <tr>
+                  <td width="33%" align="left" valign="top">
+                  </td>
+                  <td width="34%" align="center" valign="top">
+                      Copyright @ All reserved.
+                  </td>
+                  <td width="33%" align="right" valign="top">
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+  </div>
+
+<script> handle_collap(); </script>
+{% endblock %}
+
+{% block js_bottom %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML-full"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [["$", "$"], ["\\\\(", "\\\\)"]],
+            displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+            processEscapes: true
+        },
+        config: ["MMLorHTML.js"],
+        jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+        extensions: ["MathMenu.js", "MathZoom.js"]
+    });
+</script>
+{% endblock %}
