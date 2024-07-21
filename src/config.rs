@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub server_addr: String,
-    pub dir_notes: String,
-    pub dir_templates: String,
+    pub rusty_server_addr: String,
+    pub rusty_dir_notes: String,
+    pub rusty_dir_templates: String,
 }
 
 impl Default for Config {
@@ -26,9 +26,9 @@ impl Default for Config {
         let dir_templates = dir_templates.to_string_lossy().into_owned();
 
         Config {
-            server_addr: "127.0.0.1:7777".into(),
-            dir_notes: dir_notes.into(),
-            dir_templates: dir_templates.into(),
+            rusty_server_addr: "127.0.0.1:7777".into(),
+            rusty_dir_notes: dir_notes.into(),
+            rusty_dir_templates: dir_templates.into(),
         }
     }
 }
@@ -38,8 +38,8 @@ impl Config {
         let config: Config = Figment::from(Serialized::defaults(Config::default()))
             .merge(Env::raw().only(&[
                "RUSTY_SERVER_ADDR",
-               "RUSTY_NOTES_DIR",
-               "RUSTY_TEMPLATES_DIR",
+               "RUSTY_DIR_NOTES",
+               "RUSTY_DIR_TEMPLATES",
             ]))
             .extract()?;
 

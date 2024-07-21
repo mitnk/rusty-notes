@@ -1,6 +1,6 @@
 [package]
 name = "rusty-notes"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Hugo Wang <w@mitnk.com>"]
 edition = "2021"
 

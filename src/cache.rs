@@ -24,4 +24,3 @@ pub fn cache_get(k: &str) -> Option<String> {
 pub fn cache_set_1h(k: &str, v: &str) {
     CACHE.lock().unwrap().insert(k.to_string(), v.to_string(), Duration::from_secs(3600));
 }
-

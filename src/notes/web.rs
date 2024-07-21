@@ -3,7 +3,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use actix_files::NamedFile;
-use actix_session::Session;
 use actix_web::http::header::HeaderValue;
 use actix_web::http::header::ContentDisposition;
 use actix_web::{web, HttpResponse, Result, Responder};
@@ -26,7 +25,7 @@ pub struct Info {
     q: Option<String>,
 }
 
-pub async fn home(info: web::Query<Info>, _session: Session)
+pub async fn home(info: web::Query<Info>)
     -> Result<HttpResponse>
 {
     let dir_notes = get_notes_dir();
@@ -74,7 +73,7 @@ pub async fn serve_statics(wpath: web::Path<String>) -> Result<NamedFile> {
 
 pub async fn serve_code(path: web::Path<String>) -> Result<NamedFile> {
     let config = Config::from_env().unwrap();
-    let source_file = format!("{}/static/code/{}", config.dir_notes, path);
+    let source_file = format!("{}/static/code/{}", config.rusty_dir_notes, path);
     let val = HeaderValue::from_static("inline");
     let cd: ContentDisposition = ContentDisposition::from_raw(&val)?;
 
@@ -90,7 +89,7 @@ pub async fn serve_code(path: web::Path<String>) -> Result<NamedFile> {
     }
 }
 
-pub async fn note_detail(path: web::Path<String>, _session: Session) -> Result<HttpResponse> {
+pub async fn note_detail(path: web::Path<String>) -> Result<HttpResponse> {
     let dir_notes = get_notes_dir();
     let doc_ = dir_notes.join(path.to_string());
     let doc_ = doc_.to_string_lossy().to_owned();
@@ -105,7 +104,7 @@ pub async fn note_detail(path: web::Path<String>, _session: Session) -> Result<H
     render("notes/detail.html", &context)
 }
 
-pub async fn edit_note_get(path: web::Path<String>, _session: Session) -> impl Responder {
+pub async fn edit_note_get(path: web::Path<String>) -> impl Responder {
     let dir_notes = get_notes_dir();
     let md_file = dir_notes.join(path.to_string());
     let md_file = md_file.to_string_lossy().into_owned();
@@ -133,7 +132,7 @@ pub struct EditNote {
 }
 
 pub async fn edit_note_post(
-    form: web::Form<EditNote>, path: web::Path<String>, _session: Session,
+    form: web::Form<EditNote>, path: web::Path<String>
 ) -> impl Responder
 {
     let dir_notes = get_notes_dir();
@@ -154,7 +153,7 @@ pub async fn edit_note_post(
 
 fn get_notes_dir() -> PathBuf {
     let config = Config::from_env().unwrap();
-    Path::new(&config.dir_notes).to_path_buf()
+    Path::new(&config.rusty_dir_notes).to_path_buf()
 }
 
 fn render(template: &str, context: &Context) -> Result<HttpResponse, actix_web::Error> {
