@@ -6,6 +6,10 @@ A local simple **Markdown** web interface.
 
 ## Install & Setup
 
+```
+cargo install -f rusty-notes
+```
+
 ## Run Server
 
 ```bash
