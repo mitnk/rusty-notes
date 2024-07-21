@@ -8,10 +8,9 @@ A local simple **Markdown** web interface.
 
 ## Run Server
 
-
 ```bash
 export RUSTY_SERVER_ADDR=127.0.0.1:7777
-export RUSTY_NOTES_DIR="$HOME/rusty-enotes"
-export RUSTY_TEMPLATES_DIR="$HOME/rusty-enotes/static/templates"
+export RUSTY_DIR_NOTES="$HOME/rusty-notes"
+export RUSTY_DIR_TEMPLATES="$HOME/rusty-notes/static/templates"
 nohup rusty-notes > /tmp/rusty-notes.log &
 ```
