@@ -39,50 +39,58 @@ pub fn search_notes_by_rg(q: &str, notes_dir: &str, note_list: &mut Vec<String>)
         info!("WARN: `rg` not found");
         return;
     }
+    if !tools::command_exists("bash") {
+        info!("WARN: `bash` not found; rg search stopped");
+        return;
+    }
 
     let mut cmd_pipe: Vec<String> = Vec::new();
     let tokens: Vec<&str> = q.split(' ').collect();
 
     for (i, word) in tokens.iter().enumerate() {
         let cmd = if i == 0 {
-            format!("rg -g '!subusers/' -j1 -t md -il '{}' '{}'", word, notes_dir)
+            format!("rg --follow -j1 -t md -il '{}' '{}'", word, notes_dir)
         } else {
             format!("xargs rg -j1 -il '{}'", word)
         };
         cmd_pipe.push(cmd);
     }
 
-    // Execute the pipeline commands
-    let mut previous_output: Option<std::process::Child> = None;
-
-    for cmd in cmd_pipe {
-        let mut command = Command::new("sh");
-        command.arg("-c").arg(&cmd);
-
-        // If there's previous output, set it as stdin for the new command using a pipe
-        if let Some(mut prev_output) = previous_output {
-            // Create a pipe between the commands
-            command.stdin(prev_output.stdout.take().unwrap());
-        }
-
-        let child = command.stdout(Stdio::piped()).spawn().expect("Failed to execute command");
-
-        previous_output = Some(child);
+    if cmd_pipe.is_empty() {
+        return;
     }
 
-    if let Some(mut final_output) = previous_output {
-        let stdout = final_output.stdout.take().expect("Failed to retrieve stdout");
-        let reader = BufReader::new(stdout);
+    let mut current_output = Command::new("bash")
+        .arg("-c")
+        .arg(&cmd_pipe[0])
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to execute first rg command")
+        .stdout
+        .expect("Failed to capture stdout");
 
-        for line in reader.lines() {
-            match line {
-                Ok(line) if !line.trim().is_empty() && !note_list.contains(&line) => {
-                    note_list.push(line.trim().to_owned());
-                },
-                _ => {}
+    for cmd in cmd_pipe.iter().skip(1) {
+        let process = Command::new("bash")
+            .arg("-c")
+            .arg(cmd)
+            .stdin(Stdio::from(current_output))
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Failed to execute command in pipeline");
+
+        current_output = process.stdout.expect("Failed to capture stdout");
+    }
+
+    let reader = BufReader::new(current_output);
+    for line in reader.lines() {
+        if let Ok(line) = line {
+            if line.trim().is_empty() || !line.ends_with(".md") {
+                continue;
             }
+            if note_list.iter().any(|x| *x == line) {
+                continue;
+            }
+            note_list.push(line.trim().to_owned());
         }
-
-        final_output.wait().expect("Command wasn't running");
     }
 }

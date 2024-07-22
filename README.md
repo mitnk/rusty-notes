@@ -1,6 +1,8 @@
 # Rusty Notes
 
-A local simple **Markdown** web interface.
+[![Latest Version](https://img.shields.io/crates/v/rusty-notes.svg)](https://crates.io/crates/rusty-notes)
+
+A simple local Web-UI Notebook using Markdown.
 
 ![rusty-notes](assets/img/rusty-notes-ss.png)
 
@@ -31,3 +33,9 @@ export RUSTY_DIR_NOTES="$HOME/rusty-notes"
 export RUSTY_DIR_TEMPLATES="$HOME/rusty-notes/static/templates"
 nohup rusty-notes > /tmp/rusty-notes.log &
 ```
+
+## Why this is useful?
+
+So that you have a local Markdown notebook tracked and backed up with Git. And
+simply run `rusty-notes` behind Nginx for a straightforward blogging system,
+eliminating the need for a static HTML builder.
