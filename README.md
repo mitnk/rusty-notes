@@ -7,8 +7,21 @@ A local simple **Markdown** web interface.
 ## Install & Setup
 
 ```
-cargo install -f rusty-notes
+$ cargo install -f rusty-notes
 ```
+
+You need to a one-tiime setup setup like:
+```
+$ git clone https://github.com/mitnk/rusty-notes
+$ cd rusty-notes
+$ make setup DIR=~/rusty-notes
+```
+
+This will make a notebook for your at `~/rusty-notes`, you can make more
+markdown notes under this directory. Sub-directories will be treated as
+categories.
+
+You can change the root directory, see "run server" section below.
 
 ## Run Server
 

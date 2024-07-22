@@ -2,7 +2,8 @@ use comrak::{markdown_to_html, ComrakOptions};
 use log::error;
 use regex::Regex;
 use std::fs;
-use std::io::{BufRead, BufReader};
+use std::fs::OpenOptions;
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 use walkdir::WalkDir;
@@ -219,11 +220,21 @@ fn create_new_note(q: &str, notes_dir: &str) -> String {
     } else {
         format!("{}.md", v2[1])
     };
-    let cmd = format!("mkdir -p '{}/{}'", notes_dir, v2[0]);
-    cicada::run(&cmd);
-    let cmd = format!("echo 'newly-created' >> '{}/{}/{}'", notes_dir, v2[0], md_name);
-    cicada::run(&cmd);
-    return "newly-created".to_string();
+
+    fs::create_dir_all(notes_dir).ok();
+
+    let path = Path::new(notes_dir);
+    let md_file = path.join(v2[0]).join(md_name);
+    let mut f = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(md_file)
+        .expect("Unable to open file");
+
+    f.write_all(b"newly-created\n").ok();
+
+    "newly-created".to_string()
 }
 
 pub fn get_notes_by_search(q: &str, notes_dir: &str, note_list: &mut Vec<String>) -> String {
