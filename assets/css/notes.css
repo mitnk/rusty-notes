@@ -1,11 +1,7 @@
 body {
     margin: 0;
-    max-width: 1280px;
     line-height: 1.6em;
     font-size: 1.3em;
-    color: #333;
-    padding: 0 10px;
-    font-family: "Helvetica Neue", helvetica, sans-serif;
 }
 
 a { color:#AA0000; text-decoration:none; }
@@ -13,7 +9,13 @@ h1 { line-height: 1.2em; font-family: georgia, serif; }
 h2 { border-bottom: 2px solid #CCC; margin-top: 40px; line-height: 1.5em; font-family: georgia, serif; }
 h3 { line-height: 1.5em; font-family: georgia, serif; }
 
-#container { padding: 24px; }
+#container {
+    margin: 10px auto;
+    max-width: 1080px;
+    color: #333;
+    padding: 0 10px;
+    font-family: "Helvetica Neue", helvetica, sans-serif;
+}
 
 pre {
     background: #eeeedd;
