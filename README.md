@@ -21,7 +21,8 @@ $ make setup DIR=~/rusty-notes
 
 This will make a notebook for you at `~/rusty-notes`, you can make more
 markdown notes under this directory. Sub-directories will be treated as
-categories.
+categories. The Web-UI will be
+[http://127.0.0.1:7777/notes/](http://127.0.0.1:7777/notes/).
 
 You can change the root directory, see "run server" section below.
 
