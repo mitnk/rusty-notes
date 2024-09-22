@@ -8,6 +8,7 @@ pub struct Config {
     pub rusty_server_addr: String,
     pub rusty_dir_notes: String,
     pub rusty_dir_templates: String,
+    pub rusty_url_prefix: String,
 }
 
 impl Default for Config {
@@ -29,6 +30,7 @@ impl Default for Config {
             rusty_server_addr: "127.0.0.1:7777".into(),
             rusty_dir_notes: dir_notes.into(),
             rusty_dir_templates: dir_templates.into(),
+            rusty_url_prefix: "/notes/".into(),
         }
     }
 }
@@ -40,6 +42,7 @@ impl Config {
                "RUSTY_SERVER_ADDR",
                "RUSTY_DIR_NOTES",
                "RUSTY_DIR_TEMPLATES",
+               "RUSTY_URL_PREFIX",
             ]))
             .extract()?;
 

@@ -15,7 +15,7 @@
         <tr>
             <td></td>
             <td style="width: 40%;">
-                <a href="/notes/">Home</a>
+                <a href="{{ notes_prefix }}">Home</a>
             </td>
             <td style="font-weight: bold;">File Name</td>
             <td width="168">
@@ -31,13 +31,13 @@
             </td>
             <td>
                 {% if item.root_dir %}
-                    <a href="/notes/{{ item.root_dir }}/{{ item.file_name }}">{{ item.file_name }}</a>
+                    <a href="{{ notes_prefix }}{{ item.root_dir }}/{{ item.file_name }}">{{ item.file_name }}</a>
                 {% else %}
-                    <a href="/notes/{{ item.file_name }}">{{ item.file_name }}</a>
+                    <a href="{{ notes_prefix }}{{ item.file_name }}">{{ item.file_name }}</a>
                 {% endif %}
             </td>
             <td>
-                <a href="/notes/?category={{ item.root_dir }}">{{ item.root_dir }}</a>
+                <a href="{{ notes_prefix }}?category={{ item.root_dir }}">{{ item.root_dir }}</a>
             </td>
             <td>
                 {{ item.modified_str }}

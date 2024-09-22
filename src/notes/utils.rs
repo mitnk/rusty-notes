@@ -196,43 +196,57 @@ pub fn expand_collapse_tags(html: &str) -> String {
 }
 
 fn create_new_note(q: &str, notes_dir: &str) -> String {
-    let v: Vec<&str> = q.split(':').collect();
+    let v: Vec<&str> = q.split("::").collect();
 
-    let md_path: &str;
-    match v.last() {
-        Some(x) => {
-            md_path = x;
-        }
-        None => {
-            return "USE touch::foobar.md".to_string();
-        }
+    if v.len() != 2 {
+        return "Invalid command format. USE touch::foobar.md".to_string();
     }
 
+    let md_path: &str = v[1];
     let mut v2: Vec<&str> = md_path.split('/').collect();
-    if v2.len() == 1 {
-        v2.insert(0, "notes");
-    } else if v2.len() > 2 {
-        return "only one level supported".to_string();
-    }
 
-    let md_name = if v2[1].ends_with(".md") {
-        v2[1].to_string()
+    // Extract filename and ensure it ends with .md
+    let filename = if let Some(last) = v2.pop() {
+        if last.ends_with(".md") {
+            last.to_string()
+        } else {
+            format!("{}.md", last)
+        }
     } else {
-        format!("{}.md", v2[1])
+        return "Invalid path".to_string();
     };
 
-    fs::create_dir_all(notes_dir).ok();
+    // Prepend notes_dir and append residual parts of the path
+    v2.insert(0, notes_dir);
+    let dirs_path = v2.join("/");
+    let dirs_path = Path::new(&dirs_path);
 
-    let path = Path::new(notes_dir);
-    let md_file = path.join(v2[0]).join(md_name);
-    let mut f = OpenOptions::new()
+    // Create directories if not exist
+    if let Err(e) = fs::create_dir_all(dirs_path) {
+        return format!("Failed to create directories: {}", e);
+    }
+
+    // Create the full file path
+    let file_path = dirs_path.join(&filename);
+
+    // Check if the file already exists
+    if file_path.exists() {
+        return "File already exists".to_string();
+    }
+
+    // Create and open the markdown file
+    let mut f = match OpenOptions::new()
         .write(true)
         .create(true)
-        .append(true)
-        .open(md_file)
-        .expect("Unable to open file");
+        .open(&file_path)
+    {
+        Ok(file) => file,
+        Err(_) => return "Unable to open file".to_string(),
+    };
 
-    f.write_all(b"newly-created\n").ok();
+    if f.write_all(b"newly-created\n").is_err() {
+        return "Failed to write to file".to_string();
+    }
 
     "newly-created".to_string()
 }

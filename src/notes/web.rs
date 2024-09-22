@@ -30,6 +30,7 @@ pub async fn home(info: web::Query<Info>)
 {
     let dir_notes = get_notes_dir();
     let dir_notes = dir_notes.to_string_lossy().to_owned();
+    let url_prefix = get_url_prefix();
     let category = if let Some(x) = &info.category { x.clone() } else { String::new() };
 
     let mut q = if let Some(x) = &info.q { x.clone() } else { String::new() };
@@ -60,6 +61,7 @@ pub async fn home(info: web::Query<Info>)
     context.insert("in_home", &true);
     context.insert("records", &records);
     context.insert("category", &category);
+    context.insert("notes_prefix", &url_prefix);
     context.insert("q", &q);
 
     render("notes/home.html", &context)
@@ -97,8 +99,10 @@ pub async fn note_detail(path: web::Path<String>) -> Result<HttpResponse> {
     let mut context = Context::new();
     let (html, title) = render_doc(&doc_);
     context.insert("content", &html);
-    let edit_url = format!("/notes/edit/{}", path);
+    let url_prefix = get_url_prefix();
+    let edit_url = format!("{}edit/{}", url_prefix, path);
     context.insert("edit_url", &edit_url);
+    context.insert("notes_prefix", &url_prefix);
     context.insert("title", &title);
 
     render("notes/detail.html", &context)
@@ -113,17 +117,13 @@ pub async fn edit_note_get(path: web::Path<String>) -> impl Responder {
     let content = fs::read_to_string(&md_file)
         .expect("Something went wrong reading the file");
 
+    let url_prefix = get_url_prefix();
     let mut context = Context::new();
     context.insert("content", &content);
     let path: String = path.into_inner();
     context.insert("note_path", &path);
-    match TEMPLATES.render("notes/edit.html", &context) {
-        Ok(html) => HttpResponse::Ok().body(html),
-        Err(e) => {
-            let err_info = format!("error: {:?}", e);
-            HttpResponse::Ok().body(err_info)
-        }
-    }
+    context.insert("notes_prefix", &url_prefix);
+    render("notes/edit.html", &context)
 }
 
 #[derive(Deserialize)]
@@ -147,13 +147,22 @@ pub async fn edit_note_post(
     f.write_all(b"\n").expect("write_all error");
     f.sync_all().expect("sync_all error");
 
-    let note_url = format!("/notes/{}", path);
+    let url_prefix = get_url_prefix();
+    let note_url = format!("{}{}", url_prefix, path);
     HttpResponse::Found().append_header(("Location", note_url)).finish()
 }
 
 fn get_notes_dir() -> PathBuf {
     let config = Config::from_env().unwrap();
     Path::new(&config.rusty_dir_notes).to_path_buf()
+}
+
+fn get_url_prefix() -> String {
+    let config = Config::from_env().unwrap();
+    match config.rusty_url_prefix.trim_matches('/') {
+        "" => "/".to_string(),
+        s => format!("/{}/", s),
+    }
 }
 
 fn render(template: &str, context: &Context) -> Result<HttpResponse, actix_web::Error> {

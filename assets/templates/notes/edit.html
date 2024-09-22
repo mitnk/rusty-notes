@@ -4,11 +4,11 @@
 
 {% block wrapper %}
 <div>
-    <a href="javascript:history.go(-1)">Go Back</a> // <a href="/notes/">Go Home</a>
+    <a href="javascript:history.go(-1)">Go Back</a> // <a href="{{ notes_prefix }}">Go Home</a>
     <br>
     <hr>
 
-    <span><strong>Editing:</strong> <a href="/notes/{{ note_path }}">{{ note_path }}</a></span>
+    <span><strong>Editing:</strong> <a href="{{ notes_prefix }}{{ note_path }}">{{ note_path }}</a></span>
 <form class="pure-form" method="post" action="">
 <fieldset>
 <textarea id="note" name="note" rows="26" cols="112">

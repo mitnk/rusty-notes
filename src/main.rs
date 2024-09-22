@@ -6,7 +6,7 @@ mod tools;
 mod types;
 mod highlighter;
 
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web::middleware::Logger;
 use dotenv::dotenv;
 use env_logger::{self, Env};
@@ -32,9 +32,14 @@ async fn main() -> std::io::Result<()> {
     if !tools::is_dir(&config.rusty_dir_notes) {
         info!("WARN: directory `{}` does not exist", config.rusty_dir_notes);
     }
-
     info!("notes root directory: {}", config.rusty_dir_notes);
-    info!("Rusty Notes running at: http://{}/notes/", config.rusty_server_addr);
+
+    let notes_prefix = match config.rusty_url_prefix.trim_matches('/') {
+        "" => "/".to_string(),
+        s => format!("/{}/", s),
+    };
+    info!("notes_prefix: {}", notes_prefix);
+    info!("Rusty Notes running at: http://{}{}", config.rusty_server_addr, notes_prefix);
 
     let server = HttpServer::new(move || {
         App::new()
@@ -43,26 +48,19 @@ async fn main() -> std::io::Result<()> {
 
             .wrap(Logger::default())
 
-            .route("/", web::get().to(index))
-            .route("/notes/", web::get().to(notes::web::home))
-            .route("/notes/edit/{tail:.*}", web::get().to(notes::web::edit_note_get))
-            .route("/notes/edit/{tail:.*}", web::post().to(notes::web::edit_note_post))
-            .route("/notes/{tail:.*}", web::get().to(notes::web::note_detail))
+            .route(&format!("{}", notes_prefix), web::get().to(notes::web::home))
+            .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::get().to(notes::web::edit_note_get))
+            .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::post().to(notes::web::edit_note_post))
 
             .route("/stc/{tail:.*}", web::get().to(notes::web::serve_statics))
             .route("/code/{tail:.*}", web::get().to(notes::web::serve_code))
+            // need to be the last one for notes-prefix: "/"
+            .route(&format!("{}{{tail:.*}}", notes_prefix), web::get().to(notes::web::note_detail))
 
-            .default_service(
-                web::to(|| HttpResponse::NotFound())
-            )
+            .default_service(web::to(|| HttpResponse::NotFound()))
     })
     .bind(config.rusty_server_addr.clone())?
     .workers(2)
     .run();
     server.await
-}
-
-async fn index() -> impl Responder {
-    let html = format!("Hello {}", "世界！");
-    HttpResponse::Ok().body(html)
 }
