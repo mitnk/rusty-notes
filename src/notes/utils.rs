@@ -195,6 +195,16 @@ pub fn expand_collapse_tags(html: &str) -> String {
     html_new.to_string()
 }
 
+pub fn expand_think_tags(html: &str) -> String {
+    let re = Regex::new(r"<think>").unwrap();
+    let html_new = re.replace_all(html, r#"<div class="think">"#);
+
+    let re = Regex::new(r"</think>").unwrap();
+    let html_new = re.replace_all(&html_new, "</div>");
+
+    html_new.to_string()
+}
+
 fn create_new_note(q: &str, notes_dir: &str) -> String {
     let v: Vec<&str> = q.split("::").collect();
 
@@ -283,6 +293,7 @@ pub fn render_doc(mk_file: &str) -> (String, String) {
     let html = render_text(&txt);
     let html = highlight_html(&html);
     let html = expand_collapse_tags(&html);
+    let html = expand_think_tags(&html);
     let note = NoteItem::new(mk_file);
     let title = get_note_title(&note);
 
