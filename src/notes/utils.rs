@@ -37,7 +37,7 @@ fn title_string<R>(mut rdr: R) -> String
 
 fn walk_dir(root_dir: &str, suffix: &str) -> Vec<String> {
     let mut result = Vec::new();
-    for entry in WalkDir::new(root_dir) {
+    for entry in WalkDir::new(root_dir).follow_links(true) {
         if entry.is_err() {
             return result;
         }
