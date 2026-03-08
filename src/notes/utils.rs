@@ -39,9 +39,9 @@ fn walk_dir(root_dir: &str, suffix: &str) -> Vec<String> {
     let mut result = Vec::new();
     for entry in WalkDir::new(root_dir).follow_links(true) {
         if entry.is_err() {
-            return result;
+            println!("walkdir error: {:?}", entry);
+            continue;
         }
-        // info!("{:?}", entry);
 
         let path = entry.unwrap().into_path();
         let _file_path = format!("{}", path.to_string_lossy());
