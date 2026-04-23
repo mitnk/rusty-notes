@@ -60,6 +60,10 @@ fn walk_dir(root_dir: &str, suffix: &str) -> Vec<String> {
                 if x.contains("/subusers/") {
                     continue;
                 }
+                // Skip files under the static/ directory
+                if x.contains("/static/") {
+                    continue;
+                }
             }
             Err(_) => {}
         }
