@@ -4,8 +4,6 @@
 
 A simple local Web-UI Notebook using Markdown.
 
-![rusty-notes](assets/img/rusty-notes-ss.png)
-
 ## Install
 
 ```
@@ -44,6 +42,10 @@ Static files under `$RUSTY_NOTES_DIR/static/` can be access with URLs like:
   - for file: `static/img/hello.png`
 - http://127.0.0.1:7777/code/2024/foo.c
   - for file: `static/code/2024/foo.c`
+
+## What does it look like?
+
+![rusty-notes](assets/img/rusty-notes-ss.png)
 
 ## Why is this useful?
 
