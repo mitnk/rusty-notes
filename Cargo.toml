@@ -3,7 +3,7 @@ name = "rusty-notes"
 description = "A markdown web-interface notebook."
 repository = "https://github.com/mitnk/rusty-notes"
 keywords = ["markdown", "notebook"]
-version = "1.5.3"
+version = "1.6.0"
 authors = ["Hugo Wang <w@mitnk.com>"]
 categories = ["command-line-utilities"]
 license = "MIT"
@@ -15,24 +15,24 @@ strip = true
 [dependencies]
 actix-web = "4"
 actix-files = "0.6"
-comrak = "0.21"
-lazy_static = "1.4"
+comrak = "0.52"
+lazy_static = "1.5"
 regex = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 ttl_cache = "0.5"
 futures = "0.3"
-base64 = "0.21"
-bytes = "1.5"
+base64 = "0.22"
+bytes = "1.11"
 log = "0.4"
 env_logger = "0.11"
 dotenv = "0.15"
 figment = { version = "0.10", features = ["env"] }
-derive_more = "0.99"
+derive_more = "2.1"
 walkdir = "2"
-rand = "0.8"
-syntect = "5.2"
-scraper = "0.18"
+rand = "0.10"
+syntect = "5.3"
+scraper = "0.27"
 htmlescape = "0.3"
 mime = "0.3"
 time = "0.3"
@@ -42,6 +42,6 @@ version = "1"
 default-features = false
 
 [dependencies.actix-session]
-version = "0.9"
+version = "0.11"
 features = ["cookie-session"]
 default-features = false

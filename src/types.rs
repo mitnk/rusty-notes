@@ -1,5 +1,5 @@
 use serde::Serialize;
-use time::{OffsetDateTime, UtcOffset, format_description};
+use time::{format_description, OffsetDateTime, UtcOffset};
 
 #[derive(Debug, Serialize)]
 pub struct NoteItem {
@@ -26,15 +26,11 @@ impl NoteItem {
     pub fn set_modified(&mut self, modified_ts: i64) {
         let dt = OffsetDateTime::from_unix_timestamp(modified_ts)
             .expect("valid timestamp")
-            .to_offset(
-                UtcOffset::from_whole_seconds(8 * 3600)
-                .expect("valid offset")
-            );
+            .to_offset(UtcOffset::from_whole_seconds(8 * 3600).expect("valid offset"));
 
         // Custom format for "YYYY-mm-dd HH:MM"
-        let format = format_description::parse(
-            "[year]-[month]-[day] [hour repr:24]:[minute]"
-        ).expect("valid format description");
+        let format = format_description::parse("[year]-[month]-[day] [hour repr:24]:[minute]")
+            .expect("valid format description");
 
         let formatted_dt = dt.format(&format).expect("valid date-time format");
         self.modified_ts = modified_ts;

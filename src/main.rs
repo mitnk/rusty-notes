@@ -1,17 +1,17 @@
-mod config;
-mod notes;
 mod cache;
+mod config;
+mod highlighter;
+mod notes;
 mod templates;
 mod tools;
 mod types;
-mod highlighter;
 
-use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web::middleware::Logger;
+use actix_web::{web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use env_logger::{self, Env};
-use std::process;
 use log::info;
+use std::process;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -29,8 +29,10 @@ async fn main() -> std::io::Result<()> {
         match std::fs::create_dir_all(&config.rusty_notes_dir) {
             Ok(_) => info!("Created notes directory: {}", config.rusty_notes_dir),
             Err(e) => {
-                println!("ERROR: failed to create notes directory `{}`: {}",
-                    config.rusty_notes_dir, e);
+                println!(
+                    "ERROR: failed to create notes directory `{}`: {}",
+                    config.rusty_notes_dir, e
+                );
                 process::exit(1);
             }
         }
@@ -41,27 +43,41 @@ async fn main() -> std::io::Result<()> {
         "" => "/".to_string(),
         s => format!("/{}/", s),
     };
-    info!("Rusty Notes running at: http://{}{}", config.rusty_server_addr, notes_prefix);
+    info!(
+        "Rusty Notes running at: http://{}{}",
+        config.rusty_server_addr, notes_prefix
+    );
 
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::PayloadConfig::new(1024 * 1024 * 2))
             .app_data(web::FormConfig::default().limit(1024 * 1024 * 2))
-
             .wrap(Logger::default())
-
-            .route(&format!("{}", notes_prefix), web::get().to(notes::web::home))
-            .route(&format!("{}create/", notes_prefix), web::get().to(notes::web::create_note_get))
-            .route(&format!("{}create/", notes_prefix), web::post().to(notes::web::create_note_post))
-            .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::get().to(notes::web::edit_note_get))
-            .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::post().to(notes::web::edit_note_post))
-
+            .route(&notes_prefix.to_string(), web::get().to(notes::web::home))
+            .route(
+                &format!("{}create/", notes_prefix),
+                web::get().to(notes::web::create_note_get),
+            )
+            .route(
+                &format!("{}create/", notes_prefix),
+                web::post().to(notes::web::create_note_post),
+            )
+            .route(
+                &format!("{}edit/{{tail:.*}}", notes_prefix),
+                web::get().to(notes::web::edit_note_get),
+            )
+            .route(
+                &format!("{}edit/{{tail:.*}}", notes_prefix),
+                web::post().to(notes::web::edit_note_post),
+            )
             .route("/stc/{tail:.*}", web::get().to(notes::web::serve_statics))
             .route("/code/{tail:.*}", web::get().to(notes::web::serve_code))
             // need to be the last one for notes-prefix: "/"
-            .route(&format!("{}{{tail:.*}}", notes_prefix), web::get().to(notes::web::note_detail))
-
-            .default_service(web::to(|| HttpResponse::NotFound()))
+            .route(
+                &format!("{}{{tail:.*}}", notes_prefix),
+                web::get().to(notes::web::note_detail),
+            )
+            .default_service(web::to(HttpResponse::NotFound))
     })
     .bind(config.rusty_server_addr.clone())?
     .workers(2)

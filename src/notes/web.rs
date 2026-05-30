@@ -3,22 +3,21 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use actix_files::NamedFile;
-use actix_web::http::header::HeaderValue;
 use actix_web::http::header::ContentDisposition;
-use actix_web::{web, HttpRequest, HttpResponse, Result, Responder};
+use actix_web::http::header::HeaderValue;
+use actix_web::{web, HttpRequest, HttpResponse, Responder, Result};
 use serde::Deserialize;
 use tera::Context;
 
 use crate::config::Config;
-use crate::templates::TEMPLATES;
 use crate::notes::utils::create_new_note;
 use crate::notes::utils::fetch_all_notes;
-use crate::notes::utils::reset_note_title_cache;
-use crate::notes::utils::note_path_to_items;
 use crate::notes::utils::get_notes_by_search;
+use crate::notes::utils::note_path_to_items;
 use crate::notes::utils::render_doc;
+use crate::notes::utils::reset_note_title_cache;
+use crate::templates::TEMPLATES;
 use crate::types::NoteItem;
-
 
 #[derive(Deserialize)]
 pub struct Info {
@@ -26,15 +25,21 @@ pub struct Info {
     q: Option<String>,
 }
 
-pub async fn home(info: web::Query<Info>)
-    -> Result<HttpResponse>
-{
+pub async fn home(info: web::Query<Info>) -> Result<HttpResponse> {
     let dir_notes = get_notes_dir();
-    let dir_notes = dir_notes.to_string_lossy().to_owned();
+    let dir_notes = dir_notes.to_string_lossy().into_owned();
     let url_prefix = get_url_prefix();
-    let category = if let Some(x) = &info.category { x.clone() } else { String::new() };
+    let category = if let Some(x) = &info.category {
+        x.clone()
+    } else {
+        String::new()
+    };
 
-    let mut q = if let Some(x) = &info.q { x.clone() } else { String::new() };
+    let mut q = if let Some(x) = &info.q {
+        x.clone()
+    } else {
+        String::new()
+    };
     let mut files_selected: Vec<String> = Vec::new();
     if !q.is_empty() {
         let _info = get_notes_by_search(&q, &dir_notes, &mut files_selected);
@@ -47,11 +52,17 @@ pub async fn home(info: web::Query<Info>)
     if !files_selected.is_empty() || !q.is_empty() {
         records = note_path_to_items(files_selected, &dir_notes);
     } else {
-        let limit = if !q.is_empty() || !category.is_empty() { 0 } else { 37 };
+        let limit = if !q.is_empty() || !category.is_empty() {
+            0
+        } else {
+            37
+        };
         let category_dir = format!("{}/", category);
         for item in fetch_all_notes(&dir_notes, &dir_notes, limit) {
-            if !category.is_empty() && category != "_all" && !(
-                    item.root_dir == category || item.root_dir.starts_with(&category_dir)) {
+            if !category.is_empty()
+                && category != "_all"
+                && !(item.root_dir == category || item.root_dir.starts_with(&category_dir))
+            {
                 continue;
             }
             records.push(item)
@@ -92,7 +103,9 @@ pub async fn create_note_post(form: web::Form<CreateNote>) -> Result<HttpRespons
     match create_new_note(&form.note_path, &form.body, &dir_notes) {
         Ok(note_path) => {
             let note_url = format!("{}{}", url_prefix, note_path);
-            Ok(HttpResponse::Found().append_header(("Location", note_url)).finish())
+            Ok(HttpResponse::Found()
+                .append_header(("Location", note_url))
+                .finish())
         }
         Err(e) => {
             // Re-render the create page with the error and the entered values.
@@ -114,8 +127,14 @@ fn embedded_static(rel: &str) -> Option<(&'static [u8], &'static str)> {
         "css/pure-min.css" => (include_bytes!("../../assets/css/pure-min.css"), "text/css"),
         "css/pygments.css" => (include_bytes!("../../assets/css/pygments.css"), "text/css"),
         "css/syntect.css" => (include_bytes!("../../assets/css/syntect.css"), "text/css"),
-        "js/notes.js" => (include_bytes!("../../assets/js/notes.js"), "application/javascript"),
-        "img/rusty-notes.png" => (include_bytes!("../../assets/img/rusty-notes.png"), "image/png"),
+        "js/notes.js" => (
+            include_bytes!("../../assets/js/notes.js"),
+            "application/javascript",
+        ),
+        "img/rusty-notes.png" => (
+            include_bytes!("../../assets/img/rusty-notes.png"),
+            "image/png",
+        ),
         _ => return None,
     };
     Some(asset)
@@ -132,9 +151,7 @@ pub async fn serve_statics(req: HttpRequest, wpath: web::Path<String>) -> HttpRe
     }
 
     match embedded_static(&rel) {
-        Some((bytes, content_type)) => {
-            HttpResponse::Ok().content_type(content_type).body(bytes)
-        }
+        Some((bytes, content_type)) => HttpResponse::Ok().content_type(content_type).body(bytes),
         None => HttpResponse::NotFound().finish(),
     }
 }
@@ -160,7 +177,7 @@ pub async fn serve_code(path: web::Path<String>) -> Result<NamedFile> {
 pub async fn note_detail(path: web::Path<String>) -> Result<HttpResponse> {
     let dir_notes = get_notes_dir();
     let doc_ = dir_notes.join(path.to_string());
-    let doc_ = doc_.to_string_lossy().to_owned();
+    let doc_ = doc_.to_string_lossy().into_owned();
 
     let mut context = Context::new();
     let (html, title) = render_doc(&doc_);
@@ -180,8 +197,7 @@ pub async fn edit_note_get(path: web::Path<String>) -> impl Responder {
     let md_file = md_file.to_string_lossy().into_owned();
     reset_note_title_cache(&md_file);
 
-    let content = fs::read_to_string(&md_file)
-        .expect("Something went wrong reading the file");
+    let content = fs::read_to_string(&md_file).expect("Something went wrong reading the file");
 
     let url_prefix = get_url_prefix();
     let mut context = Context::new();
@@ -197,10 +213,7 @@ pub struct EditNote {
     note: String,
 }
 
-pub async fn edit_note_post(
-    form: web::Form<EditNote>, path: web::Path<String>
-) -> impl Responder
-{
+pub async fn edit_note_post(form: web::Form<EditNote>, path: web::Path<String>) -> impl Responder {
     let dir_notes = get_notes_dir();
     let md_file = dir_notes.join(path.to_string());
     let md_file = md_file.to_string_lossy().into_owned();
@@ -215,7 +228,9 @@ pub async fn edit_note_post(
 
     let url_prefix = get_url_prefix();
     let note_url = format!("{}{}", url_prefix, path);
-    HttpResponse::Found().append_header(("Location", note_url)).finish()
+    HttpResponse::Found()
+        .append_header(("Location", note_url))
+        .finish()
 }
 
 fn get_notes_dir() -> PathBuf {
@@ -233,9 +248,7 @@ fn get_url_prefix() -> String {
 
 fn render(template: &str, context: &Context) -> Result<HttpResponse, actix_web::Error> {
     match TEMPLATES.render(template, context) {
-        Ok(html) => {
-            Ok(HttpResponse::Ok().body(html))
-        }
+        Ok(html) => Ok(HttpResponse::Ok().body(html)),
         Err(e) => {
             let msg = format!("error: {:?}", e);
             Ok(HttpResponse::NotFound().body(msg))

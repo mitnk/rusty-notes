@@ -1,7 +1,10 @@
-use figment::{Figment, Error, providers::{Env, Serialized}};
-use std::{env, process};
-use std::path::Path;
+use figment::{
+    providers::{Env, Serialized},
+    Error, Figment,
+};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
+use std::{env, process};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
@@ -25,20 +28,16 @@ impl Default for Config {
 
         Config {
             rusty_server_addr: "127.0.0.1:7777".into(),
-            rusty_notes_dir: dir_notes.into(),
+            rusty_notes_dir: dir_notes,
             rusty_url_prefix: "/".into(),
         }
     }
 }
 
 impl Config {
-    pub fn from_env() -> Result<Self, Error> {
+    pub fn from_env() -> Result<Self, Box<Error>> {
         let config: Config = Figment::from(Serialized::defaults(Config::default()))
-            .merge(Env::raw().only(&[
-               "RUSTY_SERVER_ADDR",
-               "RUSTY_NOTES_DIR",
-               "RUSTY_URL_PREFIX",
-            ]))
+            .merge(Env::raw().only(&["RUSTY_SERVER_ADDR", "RUSTY_NOTES_DIR", "RUSTY_URL_PREFIX"]))
             .extract()?;
 
         Ok(config)

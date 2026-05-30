@@ -22,17 +22,15 @@ pub fn highlight_html(html: &str) -> String {
     let select_code = Selector::parse("code").unwrap();
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
+    let re = Regex::new(r"code class=.language-([A-Za-z0-9]+).").unwrap();
 
     for item in fragment.select(&select_pre) {
         for item_code in item.select(&select_code) {
             let code_html = item_code.html();
             // println!("code_html: {:?}", code_html);
 
-            let re = Regex::new(r"code class=.language-([A-Za-z0-9]+).").unwrap();
             let lang = match re.captures(&code_html) {
-                Some(cap) => {
-                    cap[1].to_string()
-                }
+                Some(cap) => cap[1].to_string(),
                 None => String::new(),
             };
 
@@ -59,13 +57,20 @@ pub fn highlight_html(html: &str) -> String {
             // println!("code inner html (new): {:?}", raw_code);
 
             let output_html = highlighted_html_for_string(
-                &raw_code, &syntax_set, &syntax,
-                &ts.themes["Solarized (light)"]);
+                &raw_code,
+                &syntax_set,
+                syntax,
+                &ts.themes["Solarized (light)"],
+            );
             // println!("output_html o: {:?}", output_html);
 
             // note here we replaced one newline char after <pre>
             let output_html = output_html.unwrap();
-            let output_html = output_html.replacen("<pre style=\"background-color:#fdf6e3;\">\n", "<pre><code>", 1);
+            let output_html = output_html.replacen(
+                "<pre style=\"background-color:#fdf6e3;\">\n",
+                "<pre><code>",
+                1,
+            );
             let output_html = output_html.trim_end_matches("</pre>\n");
             let output_html = format!("{}</code></pre>\n", output_html);
             // println!("output_html n: {:?}", output_html);
@@ -75,7 +80,10 @@ pub fn highlight_html(html: &str) -> String {
             let content_old = current_code.replace("\"", "&quot;");
             // println!("content_old o: {:?}", content_old);
 
-            let content_old = format!("<pre><code class=\"language-{}\">{}</code></pre>", lang, content_old);
+            let content_old = format!(
+                "<pre><code class=\"language-{}\">{}</code></pre>",
+                lang, content_old
+            );
             // println!("content_old n: {:?}", content_old);
 
             html_new = html_new.replace(&content_old, &output_html);

@@ -1,4 +1,4 @@
-use comrak::{markdown_to_html, ComrakOptions};
+use comrak::{markdown_to_html, Options};
 use log::error;
 use regex::Regex;
 use std::fs;
@@ -13,7 +13,8 @@ use crate::highlighter::highlight_html;
 use crate::types::NoteItem;
 
 fn title_string<R>(mut rdr: R) -> String
-    where R: BufRead,
+where
+    R: BufRead,
 {
     let mut first_line = String::new();
 
@@ -27,8 +28,7 @@ fn title_string<R>(mut rdr: R) -> String
     // Where do the leading hashes stop?
     let last_hash = first_line
         .char_indices()
-        .skip_while(|&(_, c)| c == '#')
-        .next()
+        .find(|&(_, c)| c != '#')
         .map_or(0, |(idx, _)| idx);
 
     // Trim the leading hashes and any whitespace
@@ -55,17 +55,14 @@ fn walk_dir(root_dir: &str, suffix: &str) -> Vec<String> {
         }
 
         // skip docks in subusers/
-        match path.into_os_string().into_string() {
-            Ok(x) => {
-                if x.contains("/subusers/") {
-                    continue;
-                }
-                // Skip files under the static/ directory
-                if x.contains("/static/") {
-                    continue;
-                }
+        if let Ok(x) = path.into_os_string().into_string() {
+            if x.contains("/subusers/") {
+                continue;
             }
-            Err(_) => {}
+            // Skip files under the static/ directory
+            if x.contains("/static/") {
+                continue;
+            }
         }
 
         result.push(_file_path.to_string())
@@ -95,16 +92,13 @@ pub fn note_path_to_items(path_list: Vec<String>, strip_prefix: &str) -> Vec<Not
     let mut note_list = Vec::new();
     for file_path in path_list {
         let mut note_item = NoteItem::new(&file_path);
-        let metadata;
-        match fs::metadata(&file_path) {
-            Ok(x) => {
-                metadata = x;
-            }
+        let metadata = match fs::metadata(&file_path) {
+            Ok(x) => x,
             Err(e) => {
                 error!("metadata error: {:?} {}", e, &file_path);
                 continue;
             }
-        }
+        };
         let modified_ts: i64 = if let Ok(time) = metadata.modified() {
             time.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64
         } else {
@@ -115,24 +109,20 @@ pub fn note_path_to_items(path_list: Vec<String>, strip_prefix: &str) -> Vec<Not
     }
 
     for note_item in note_list.as_mut_slice() {
-        let title = get_note_title(&note_item);
+        let title = get_note_title(note_item);
 
         let path = Path::new(&note_item.file_path);
         let parent = path.parent();
         let file_name = match path.file_name() {
-            Some(s) => {
-                s.to_string_lossy().into_owned()
-            }
-            None => {
-                "no-name".to_string()
-            }
+            Some(s) => s.to_string_lossy().into_owned(),
+            None => "no-name".to_string(),
         };
 
-        if !parent.is_none() {
-            let root_dir = parent.unwrap().to_str().unwrap();
+        if let Some(parent) = parent {
+            let root_dir = parent.to_str().unwrap();
             let root_dir = root_dir.replacen(strip_prefix.trim_matches('/'), "", 1);
             let root_dir = root_dir.trim_start_matches('/');
-            note_item.set_root_dir(&root_dir);
+            note_item.set_root_dir(root_dir);
         }
         note_item.set_file_name(&file_name);
         note_item.set_title(&title);
@@ -156,30 +146,26 @@ pub fn fetch_all_notes(dir_: &str, strip_prefix: &str, limit: usize) -> Vec<Note
         note_list.push(note_item);
     }
 
-    note_list.sort_by(|a, b| b.modified_ts.cmp(&a.modified_ts));
+    note_list.sort_by_key(|n| std::cmp::Reverse(n.modified_ts));
     if limit > 0 {
         note_list.truncate(limit);
     }
 
     for note_item in note_list.as_mut_slice() {
-        let title = get_note_title(&note_item);
+        let title = get_note_title(note_item);
 
         let path = Path::new(&note_item.file_path);
         let parent = path.parent();
         let file_name = match path.file_name() {
-            Some(s) => {
-                s.to_string_lossy().into_owned()
-            }
-            None => {
-                "no-name".to_string()
-            }
+            Some(s) => s.to_string_lossy().into_owned(),
+            None => "no-name".to_string(),
         };
 
-        if !parent.is_none() {
-            let root_dir = parent.unwrap().to_str().unwrap();
+        if let Some(parent) = parent {
+            let root_dir = parent.to_str().unwrap();
             let root_dir = root_dir.replacen(strip_prefix.trim_matches('/'), "", 1);
             let root_dir = root_dir.trim_start_matches('/');
-            note_item.set_root_dir(&root_dir);
+            note_item.set_root_dir(root_dir);
         }
         note_item.set_file_name(&file_name);
         note_item.set_title(&title);
@@ -212,9 +198,7 @@ pub fn expand_think_tags(html: &str) -> String {
 // Create a markdown note at `md_path` (relative to `notes_dir`), creating any
 // parent directories, with `body` as its content. Returns the note path
 // relative to `notes_dir` on success, or an error message.
-pub fn create_new_note(md_path: &str, body: &str, notes_dir: &str)
-    -> Result<String, String>
-{
+pub fn create_new_note(md_path: &str, body: &str, notes_dir: &str) -> Result<String, String> {
     let md_path = md_path.trim().trim_start_matches('/');
     if md_path.is_empty() {
         return Err("Please provide a note path".to_string());
@@ -267,12 +251,12 @@ pub fn get_notes_by_search(q: &str, notes_dir: &str, note_list: &mut Vec<String>
 }
 
 pub fn render_text(txt: &str) -> String {
-    let mut options = ComrakOptions::default();
-    options.render.unsafe_ = true;
+    let mut options = Options::default();
+    options.render.r#unsafe = true;
     options.extension.table = true;
-    options.extension.header_ids = Some("user-content-".to_string());
-    let html = markdown_to_html(txt, &options);
-    html
+    options.extension.header_id_prefix = Some("user-content-".to_string());
+
+    markdown_to_html(txt, &options)
 }
 
 pub fn render_doc(mk_file: &str) -> (String, String) {
@@ -280,8 +264,7 @@ pub fn render_doc(mk_file: &str) -> (String, String) {
         return ("404 - no such note".to_string(), String::new());
     }
 
-    let txt = fs::read_to_string(mk_file)
-        .expect("Something went wrong reading the file");
+    let txt = fs::read_to_string(mk_file).expect("Something went wrong reading the file");
 
     // convert markdown text to html text with lib comrak.
     let html = render_text(&txt);
