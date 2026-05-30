@@ -13,6 +13,51 @@ use env_logger::{self, Env};
 use log::info;
 use std::process;
 
+// Bundled into the binary at build time. Seeded into the notes directory when
+// it starts out empty so first-time users discover how to put rusty-notes
+// behind an authenticating reverse proxy.
+const NGINX_DOC: &str = include_str!("../docs/put-rusty-notes-behind-nginx.md");
+
+// Returns true if `notes_dir` has no notes yet: no `.md` files and no
+// non-hidden subdirectories.
+fn notes_dir_is_empty(notes_dir: &str) -> bool {
+    let entries = match std::fs::read_dir(notes_dir) {
+        Ok(x) => x,
+        Err(_) => return false,
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if name.starts_with('.') {
+            continue;
+        }
+        match entry.file_type() {
+            Ok(ft) if ft.is_dir() => return false,
+            Ok(_) if name.ends_with(".md") => return false,
+            _ => {}
+        }
+    }
+    true
+}
+
+// When the notes directory is empty, drop a copy of the nginx doc at
+// `rusty-notes/put-rusty-notes-behind-nginx.md` so it shows up in the UI.
+fn seed_nginx_doc(notes_dir: &str) {
+    let dir = std::path::Path::new(notes_dir).join("rusty-notes");
+    if let Err(e) = std::fs::create_dir_all(&dir) {
+        info!("failed to create seed doc directory: {}", e);
+        return;
+    }
+    let file_path = dir.join("put-rusty-notes-behind-nginx.md");
+    match std::fs::write(&file_path, NGINX_DOC) {
+        Ok(_) => info!(
+            "notes directory was empty; seeded {}",
+            file_path.to_string_lossy()
+        ),
+        Err(e) => info!("failed to write seed doc: {}", e),
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -38,6 +83,10 @@ async fn main() -> std::io::Result<()> {
         }
     }
     info!("notes root directory: {}", config.rusty_notes_dir);
+
+    if notes_dir_is_empty(&config.rusty_notes_dir) {
+        seed_nginx_doc(&config.rusty_notes_dir);
+    }
 
     let notes_prefix = match config.rusty_url_prefix.trim_matches('/') {
         "" => "/".to_string(),
