@@ -25,20 +25,22 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    if !tools::is_dir(&config.rusty_dir_templates) {
-        println!("ERROR: directory `{}` does not exist", config.rusty_dir_templates);
-        process::exit(1);
+    if !tools::is_dir(&config.rusty_notes_dir) {
+        match std::fs::create_dir_all(&config.rusty_notes_dir) {
+            Ok(_) => info!("Created notes directory: {}", config.rusty_notes_dir),
+            Err(e) => {
+                println!("ERROR: failed to create notes directory `{}`: {}",
+                    config.rusty_notes_dir, e);
+                process::exit(1);
+            }
+        }
     }
-    if !tools::is_dir(&config.rusty_dir_notes) {
-        info!("WARN: directory `{}` does not exist", config.rusty_dir_notes);
-    }
-    info!("notes root directory: {}", config.rusty_dir_notes);
+    info!("notes root directory: {}", config.rusty_notes_dir);
 
     let notes_prefix = match config.rusty_url_prefix.trim_matches('/') {
         "" => "/".to_string(),
         s => format!("/{}/", s),
     };
-    info!("notes_prefix: {}", notes_prefix);
     info!("Rusty Notes running at: http://{}{}", config.rusty_server_addr, notes_prefix);
 
     let server = HttpServer::new(move || {
@@ -49,6 +51,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
 
             .route(&format!("{}", notes_prefix), web::get().to(notes::web::home))
+            .route(&format!("{}create/", notes_prefix), web::get().to(notes::web::create_note_get))
+            .route(&format!("{}create/", notes_prefix), web::post().to(notes::web::create_note_post))
             .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::get().to(notes::web::edit_note_get))
             .route(&format!("{}edit/{{tail:.*}}", notes_prefix), web::post().to(notes::web::edit_note_post))
 

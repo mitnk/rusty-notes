@@ -5,12 +5,13 @@ use std::path::{Path, PathBuf};
 use actix_files::NamedFile;
 use actix_web::http::header::HeaderValue;
 use actix_web::http::header::ContentDisposition;
-use actix_web::{web, HttpResponse, Result, Responder};
+use actix_web::{web, HttpRequest, HttpResponse, Result, Responder};
 use serde::Deserialize;
 use tera::Context;
 
 use crate::config::Config;
 use crate::templates::TEMPLATES;
+use crate::notes::utils::create_new_note;
 use crate::notes::utils::fetch_all_notes;
 use crate::notes::utils::reset_note_title_cache;
 use crate::notes::utils::note_path_to_items;
@@ -67,15 +68,80 @@ pub async fn home(info: web::Query<Info>)
     render("notes/home.html", &context)
 }
 
-pub async fn serve_statics(wpath: web::Path<String>) -> Result<NamedFile> {
+pub async fn create_note_get() -> Result<HttpResponse> {
+    let url_prefix = get_url_prefix();
+    let mut context = Context::new();
+    context.insert("notes_prefix", &url_prefix);
+    context.insert("note_path", &"");
+    context.insert("body", &"");
+    context.insert("msg", &"");
+    render("notes/create.html", &context)
+}
+
+#[derive(Deserialize)]
+pub struct CreateNote {
+    note_path: String,
+    body: String,
+}
+
+pub async fn create_note_post(form: web::Form<CreateNote>) -> Result<HttpResponse> {
     let dir_notes = get_notes_dir();
-    let source_file = dir_notes.join("static").join(wpath.to_string());
-    Ok(NamedFile::open(&source_file)?)
+    let dir_notes = dir_notes.to_string_lossy().into_owned();
+    let url_prefix = get_url_prefix();
+
+    match create_new_note(&form.note_path, &form.body, &dir_notes) {
+        Ok(note_path) => {
+            let note_url = format!("{}{}", url_prefix, note_path);
+            Ok(HttpResponse::Found().append_header(("Location", note_url)).finish())
+        }
+        Err(e) => {
+            // Re-render the create page with the error and the entered values.
+            let mut context = Context::new();
+            context.insert("notes_prefix", &url_prefix);
+            context.insert("note_path", &form.note_path);
+            context.insert("body", &form.body);
+            context.insert("msg", &e);
+            render("notes/create.html", &context)
+        }
+    }
+}
+
+// Static assets embedded in the binary, used as a fallback when the file does
+// not exist under `$RUSTY_NOTES_DIR/static/`.
+fn embedded_static(rel: &str) -> Option<(&'static [u8], &'static str)> {
+    let asset: (&'static [u8], &'static str) = match rel {
+        "css/notes.css" => (include_bytes!("../../assets/css/notes.css"), "text/css"),
+        "css/pure-min.css" => (include_bytes!("../../assets/css/pure-min.css"), "text/css"),
+        "css/pygments.css" => (include_bytes!("../../assets/css/pygments.css"), "text/css"),
+        "css/syntect.css" => (include_bytes!("../../assets/css/syntect.css"), "text/css"),
+        "js/notes.js" => (include_bytes!("../../assets/js/notes.js"), "application/javascript"),
+        "img/rusty-notes.png" => (include_bytes!("../../assets/img/rusty-notes.png"), "image/png"),
+        _ => return None,
+    };
+    Some(asset)
+}
+
+pub async fn serve_statics(req: HttpRequest, wpath: web::Path<String>) -> HttpResponse {
+    let dir_notes = get_notes_dir();
+    let rel = wpath.to_string();
+    let source_file = dir_notes.join("static").join(&rel);
+
+    // Prefer an on-disk file (lets users override embedded assets).
+    if let Ok(f) = NamedFile::open(&source_file) {
+        return f.into_response(&req);
+    }
+
+    match embedded_static(&rel) {
+        Some((bytes, content_type)) => {
+            HttpResponse::Ok().content_type(content_type).body(bytes)
+        }
+        None => HttpResponse::NotFound().finish(),
+    }
 }
 
 pub async fn serve_code(path: web::Path<String>) -> Result<NamedFile> {
     let config = Config::from_env().unwrap();
-    let source_file = format!("{}/static/code/{}", config.rusty_dir_notes, path);
+    let source_file = format!("{}/static/code/{}", config.rusty_notes_dir, path);
     let val = HeaderValue::from_static("inline");
     let cd: ContentDisposition = ContentDisposition::from_raw(&val)?;
 
@@ -154,7 +220,7 @@ pub async fn edit_note_post(
 
 fn get_notes_dir() -> PathBuf {
     let config = Config::from_env().unwrap();
-    Path::new(&config.rusty_dir_notes).to_path_buf()
+    Path::new(&config.rusty_notes_dir).to_path_buf()
 }
 
 fn get_url_prefix() -> String {

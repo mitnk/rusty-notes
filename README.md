@@ -6,38 +6,40 @@ A simple local Web-UI Notebook using Markdown.
 
 ![rusty-notes](assets/img/rusty-notes-ss.png)
 
-## Install & Setup
+## Install
 
 ```
 $ cargo install -f rusty-notes
+$ mkdir ~/rusty-notes
+$ rusty-notes
 ```
 
-You need to a one-time setup like:
-```
-$ git clone https://github.com/mitnk/rusty-notes
-$ cd rusty-notes
-$ make setup DIR=~/rusty-notes
-```
+The Web-UI will be at [http://127.0.0.1:7777/](http://127.0.0.1:7777/).
 
-This will make a notebook for you at `~/rusty-notes`, you can make more
-markdown notes under this directory. Sub-directories will be treated as
-categories. The Web-UI will be
-[http://127.0.0.1:7777/notes/](http://127.0.0.1:7777/notes/).
+You can create notes from the Web-UI via the "Create a new note" link on the
+home page, or simply add markdown files under the notes directory. Files are
+placed by their path, e.g. `category/new-note.md`, and sub-directories are
+treated as categories.
 
-You can change the root directory, see "run server" section below.
+You can change the root directory, see "Run Server" section below.
 
 ## Run Server
 
 ```bash
 export RUSTY_SERVER_ADDR=127.0.0.1:7777
-export RUSTY_DIR_NOTES="$HOME/rusty-notes"
-export RUSTY_DIR_TEMPLATES="$HOME/rusty-notes/static/templates"
+export RUSTY_NOTES_DIR="$HOME/rusty-notes"
 nohup rusty-notes > /tmp/rusty-notes.log &
 ```
 
+The following environment variables are supported (with their defaults):
+- `RUSTY_SERVER_ADDR`: the address to bind to (`127.0.0.1:7777`).
+- `RUSTY_NOTES_DIR`: the notes root directory (`$HOME/rusty-notes`).
+- `RUSTY_URL_PREFIX`: the URL path prefix the Web-UI is served under (`/`).
+  For example, set it to `notes` to serve the UI at `http://127.0.0.1:7777/notes/`.
+
 ## Static files
 
-Static files under `$RUSTY_DIR_NOTES/static/` can be access with URLs like:
+Static files under `$RUSTY_NOTES_DIR/static/` can be access with URLs like:
 - http://127.0.0.1:7777/stc/img/hello.png
   - for file: `static/img/hello.png`
 - http://127.0.0.1:7777/code/2024/foo.c

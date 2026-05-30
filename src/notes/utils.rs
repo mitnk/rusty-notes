@@ -209,67 +209,57 @@ pub fn expand_think_tags(html: &str) -> String {
     html_new.to_string()
 }
 
-fn create_new_note(q: &str, notes_dir: &str) -> String {
-    let v: Vec<&str> = q.split("::").collect();
-
-    if v.len() != 2 {
-        return "Invalid command format. USE touch::foobar.md".to_string();
+// Create a markdown note at `md_path` (relative to `notes_dir`), creating any
+// parent directories, with `body` as its content. Returns the note path
+// relative to `notes_dir` on success, or an error message.
+pub fn create_new_note(md_path: &str, body: &str, notes_dir: &str)
+    -> Result<String, String>
+{
+    let md_path = md_path.trim().trim_start_matches('/');
+    if md_path.is_empty() {
+        return Err("Please provide a note path".to_string());
     }
 
-    let md_path: &str = v[1];
-    let mut v2: Vec<&str> = md_path.split('/').collect();
+    let mut parts: Vec<&str> = md_path.split('/').filter(|p| !p.is_empty()).collect();
 
     // Extract filename and ensure it ends with .md
-    let filename = if let Some(last) = v2.pop() {
-        if last.ends_with(".md") {
-            last.to_string()
-        } else {
-            format!("{}.md", last)
-        }
-    } else {
-        return "Invalid path".to_string();
+    let filename = match parts.pop() {
+        Some(last) if last.ends_with(".md") => last.to_string(),
+        Some(last) => format!("{}.md", last),
+        None => return Err("Invalid path".to_string()),
     };
 
-    // Prepend notes_dir and append residual parts of the path
-    v2.insert(0, notes_dir);
-    let dirs_path = v2.join("/");
+    // Build the directory path under notes_dir and create it.
+    let mut dir_parts: Vec<&str> = vec![notes_dir];
+    dir_parts.extend(parts.iter().copied());
+    let dirs_path = dir_parts.join("/");
     let dirs_path = Path::new(&dirs_path);
-
-    // Create directories if not exist
     if let Err(e) = fs::create_dir_all(dirs_path) {
-        return format!("Failed to create directories: {}", e);
+        return Err(format!("Failed to create directories: {}", e));
     }
 
-    // Create the full file path
     let file_path = dirs_path.join(&filename);
-
-    // Check if the file already exists
     if file_path.exists() {
-        return "File already exists".to_string();
+        return Err("File already exists".to_string());
     }
 
-    // Create and open the markdown file
-    let mut f = match OpenOptions::new()
+    let content = format!("{}\n", body.replace('\r', "").trim_end());
+
+    if let Err(e) = OpenOptions::new()
         .write(true)
-        .create(true)
+        .create_new(true)
         .open(&file_path)
+        .and_then(|mut f| f.write_all(content.as_bytes()))
     {
-        Ok(file) => file,
-        Err(_) => return "Unable to open file".to_string(),
-    };
-
-    if f.write_all(b"newly-created\n").is_err() {
-        return "Failed to write to file".to_string();
+        return Err(format!("Unable to create file: {}", e));
     }
 
-    "newly-created".to_string()
+    // Reconstruct the note path relative to notes_dir.
+    parts.push(&filename);
+    Ok(parts.join("/"))
 }
 
 pub fn get_notes_by_search(q: &str, notes_dir: &str, note_list: &mut Vec<String>) -> String {
-    if q.starts_with("touch::") {
-        return create_new_note(q, notes_dir);
-    }
-
     crate::notes::search::search_notes_by_fd(q, notes_dir, note_list);
     crate::notes::search::search_notes_by_rg(q, notes_dir, note_list);
 

@@ -1,0 +1,29 @@
+{% extends "notes/base.html" %}
+
+{% block title %}Create Note{% endblock %}
+
+{% block wrapper %}
+<div>
+    <a href="javascript:history.go(-1)">Go Back</a> // <a href="{{ notes_prefix }}">Go Home</a>
+    <br>
+    <hr>
+
+    <span><strong>Create a new note</strong></span>
+    {% if msg %}
+    <div class="messages"><span style="color: #c00;">{{ msg }}</span></div>
+    {% endif %}
+<form class="pure-form pure-form-stacked" method="post" action="">
+<fieldset>
+    <label for="note_path">Note path</label>
+    <input id="note_path" name="note_path" size="60" value="{{ note_path }}" placeholder="category/new-note.md">
+
+    <label for="body">Body</label>
+    <textarea id="body" name="body" rows="22" cols="112">{{ body }}</textarea>
+
+    <br><br>
+    <button type="submit" class="pure-button pure-button-primary">Create</button>
+</fieldset>
+</form>
+
+</div>
+{% endblock %}
