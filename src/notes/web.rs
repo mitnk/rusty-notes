@@ -47,7 +47,7 @@ pub async fn home(info: web::Query<Info>)
     if !files_selected.is_empty() || !q.is_empty() {
         records = note_path_to_items(files_selected, &dir_notes);
     } else {
-        let limit = if !q.is_empty() || !category.is_empty() { 0 } else { 27 };
+        let limit = if !q.is_empty() || !category.is_empty() { 0 } else { 37 };
         let category_dir = format!("{}/", category);
         for item in fetch_all_notes(&dir_notes, &dir_notes, limit) {
             if !category.is_empty() && category != "_all" && !(
