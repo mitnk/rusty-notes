@@ -1,7 +1,7 @@
 body {
     margin: 0;
-    line-height: 1.6em;
-    font-size: 1.3em;
+    line-height: 1.43em;
+    font-size: 1.2em;
 }
 
 a { color:#AA0000; text-decoration:none; }
@@ -23,7 +23,7 @@ pre {
     line-height: 1.35em;
     overflow: auto;
     margin: 12px 0;
-    font-size: 18px;
+    font-size: 1em;
 }
 pre code { background-color: inherit; padding: 0; }
 code {

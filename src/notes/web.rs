@@ -247,7 +247,11 @@ fn get_url_prefix() -> String {
 }
 
 fn render(template: &str, context: &Context) -> Result<HttpResponse, actix_web::Error> {
-    match TEMPLATES.render(template, context) {
+    let mut context = context.clone();
+    if let Some(size) = Config::from_env().unwrap().rusty_font_size {
+        context.insert("font_size", &size);
+    }
+    match TEMPLATES.render(template, &context) {
         Ok(html) => Ok(HttpResponse::Ok().body(html)),
         Err(e) => {
             let msg = format!("error: {:?}", e);

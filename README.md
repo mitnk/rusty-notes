@@ -34,6 +34,21 @@ The following environment variables are supported (with their defaults):
 - `RUSTY_NOTES_DIR`: the notes root directory (`$HOME/rusty-notes`).
 - `RUSTY_URL_PREFIX`: the URL path prefix the Web-UI is served under (`/`).
   For example, set it to `notes` to serve the UI at `http://127.0.0.1:7777/notes/`.
+- `RUSTY_FONT_SIZE`: overrides the body base font size, as a float in `em`
+  units (e.g. `1.0`). When unset, the default from `notes.css` (`1.2em`) is used.
+
+## Customizing styles
+
+The CSS shipped with rusty-notes (including `notes.css`) is embedded in the
+binary, but you can override any of it without rebuilding. Drop your own file
+under `$RUSTY_NOTES_DIR/static/css/` and it takes precedence over the embedded
+copy. For example, to fully customize the styles, create:
+
+```
+$RUSTY_NOTES_DIR/static/css/notes.css
+```
+
+and it will be served at `/stc/css/notes.css` instead of the built-in one.
 
 ## Static files
 

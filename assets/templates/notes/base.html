@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/stc/css/pygments.css" />
   <link rel="stylesheet" href="/stc/css/syntect.css" />
   <link rel="stylesheet" href="/stc/css/notes.css" />
+  {% if font_size %}<style>body { font-size: {{ font_size }}em; }</style>{% endif %}
   <script type="text/javascript" src="/stc/js/notes.js"></script>
   {% block meta %}{% endblock %}
   {% block css %}{% endblock %}

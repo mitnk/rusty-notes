@@ -11,6 +11,8 @@ pub struct Config {
     pub rusty_server_addr: String,
     pub rusty_notes_dir: String,
     pub rusty_url_prefix: String,
+    // Overrides the `em` value of the body base font-size in notes.css when set.
+    pub rusty_font_size: Option<f64>,
 }
 
 impl Default for Config {
@@ -30,6 +32,7 @@ impl Default for Config {
             rusty_server_addr: "127.0.0.1:7777".into(),
             rusty_notes_dir: dir_notes,
             rusty_url_prefix: "/".into(),
+            rusty_font_size: None,
         }
     }
 }
@@ -37,7 +40,12 @@ impl Default for Config {
 impl Config {
     pub fn from_env() -> Result<Self, Box<Error>> {
         let config: Config = Figment::from(Serialized::defaults(Config::default()))
-            .merge(Env::raw().only(&["RUSTY_SERVER_ADDR", "RUSTY_NOTES_DIR", "RUSTY_URL_PREFIX"]))
+            .merge(Env::raw().only(&[
+                "RUSTY_SERVER_ADDR",
+                "RUSTY_NOTES_DIR",
+                "RUSTY_URL_PREFIX",
+                "RUSTY_FONT_SIZE",
+            ]))
             .extract()?;
 
         Ok(config)
